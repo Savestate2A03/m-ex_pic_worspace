@@ -1,0 +1,25 @@
+%clang
+%c -std=c23
+%h -x c
+
+-I./include/system
+-I./include/src
+-I./m-ex/MexTK/include
+
+-DGEKKO
+-mogc
+-mcpu=750
+-meabi
+-mhard-float
+-O2
+-mno-sdata
+-G0
+-std=c23
+-fPIC
+-fno-asynchronous-unwind-tables
+-fno-unwind-tables
+-fno-zero-initialized-in-bss
+-fno-data-sections
+-fno-function-sections
+-ffreestanding
+-fno-hosted
