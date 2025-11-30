@@ -4,7 +4,7 @@ Generates PIC with m-ex
 Run `make` within a devkitPro msys2 context
 
 # Changes around m-ex
-Several changes were made to m-ex. You can view them all [here](https://github.com/Savestate2A03/m-ex/commit/9ee70df961ec4f7c3366424511c5abcb2aa1053b). A lot of cleanup was done such as adhering to C23 and filling references that weren't defined. 
+Several changes were made to m-ex. You can view them all [here](https://github.com/Savestate2A03/m-ex/commits/master/). A lot of cleanup was done such as adhering to C23 and filling references that weren't defined. 
 
 ## Many library functions added
 
