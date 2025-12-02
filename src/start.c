@@ -1,49 +1,46 @@
-#define MEX_SYSTEM_INCLUDE
 #include "system.h"
-#undef MEX_SYSTEM_INCLUDE
 
-#include "example.h"
-#include "modify_static_variable.h"
+#include "alloc.h"
+#include "demo_css.h"
+#include "minor_scene_bootstrapper.h"
 
-static unsigned int my_static_var = 0;
-static unsigned int const my_static_const_var = 0;
-static unsigned int my_static_var2 = 9;
-static unsigned int const my_static_const_var2 = 9;
+inline void _patch_u32(u32* address, u32 data) { *address = data; }
+inline void _patch_u16(u16* address, u16 data) { *address = data; }
+inline void _patch_u8(u8* address, u8 data) { *address = data; }
 
-static bool first_run = false;
-
-void other() {
-    my_static_var++;
-    MODIFY_up_the_volume();
-}
+static bool bootstrapped = false;
 
 void start() {
-
-    if (!first_run) return;
-
-    static signed char my_static_var3 = 0;
-    static signed char const my_static_const_var3 = 0;
-    static signed char my_static_var4 = 9;
-    static signed char const my_static_const_var4 = 9;
-
-    my_static_var3++;
-
-    EXAMPLE_Data* data_ptr = EXAMPLE_my_example_create(1, 2, 3, 4, 5, "yippee");
-    EXAMPLE_Data data_instance;
-
-    if (EXAMPLE_my_example_increment_Vec2(data_ptr, 4)) {
-        my_static_var3 = my_static_const_var;
+    if (!bootstrapped) { // just in case ???
+        INJECT_CreateHeapSpace();
+        _breakpoint_helper(1);
+        CSS_Bootstrap();
+        bootstrapped = true;
     }
+}
 
-    other();
+void _patch() {
+    // max heaps to 7 (ie. INJECT_HEAP_ID) so it doesn't get
+    // destroyed by the heap library (which checks for 2-6)
+    stc_max_number_of_heaps = INJECT_HEAP_ID + 1;
 
-    my_static_var4++;
+    // before : li r4, 4
+    // after  : li r4, 7
+    _patch_u8((void*)0x8015ff63, stc_max_number_of_heaps);
 
-    if (EXAMPLE_my_example_increment_Vec3(data_ptr, -4)) {
-        my_static_var4 = my_static_const_var2;
-    }
+    // nudge up arenalo, we will utilize this space later during major scene init
+    void** injection_heap_pointer = INJECT_GetHeapPointer();
+    *injection_heap_pointer = OSAllocFromArenaLo(INJECT_ALLOC_SIZE, 0x10);
 
-    EXAMPLE_my_example_init(&data_instance);
-    EXAMPLE_my_example_destroy(&data_ptr);
-    first_run = true;
+    MajorScene* majorList = (MajorScene*)Scene_GetMajorSceneDesc();
+
+    majorList[MJRKIND_DBGEND] = (MajorScene){
+        .is_preload = false,
+        .major_id = MJRKIND_DBGEND,
+        .cb_Load = NULL,
+        .cb_Exit = NULL,
+        .cb_Boot = start // Hitch a ride on major scene init, uses the debug
+                         // ending major scene init function pointer feel free
+                         // to suggest a better place in the init process lol
+    };
 }

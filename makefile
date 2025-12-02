@@ -41,8 +41,6 @@ CFLAGS += -fPIC                           # Position-independent code
 CFLAGS += -fno-asynchronous-unwind-tables # No .eh_frame_hdr (exception handling metadata section)
 CFLAGS += -fno-unwind-tables              # No .eh_frame (stack unwinding section)
 CFLAGS += -fno-zero-initialized-in-bss    # Zero-init globals in .data (not .bss)
-CFLAGS += -fno-data-sections              # All data in .data (not i.e. .data.varname)
-CFLAGS += -fno-function-sections          # All code in .text (not i.e. .text.funcname)
 CFLAGS += -ffreestanding                  # No standard library
 CFLAGS += -fno-hosted                     # Bare metal
 CFLAGS += $(CFLAGS_EXTRAS) $(INCLUDE_DIR)
@@ -56,7 +54,7 @@ OBJDUMP_FLAGS_HEX := -s --disassemble-zeroes
 LINKER_SCRIPT := $(BUILD_DIR)/melee.ld
 C_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(wildcard $(SRC_DIR)/*.c))
 ASM_OBJECTS := $(patsubst $(SRC_DIR)/%.s,$(BUILD_DIR)/%.o,$(wildcard $(SRC_DIR)/*.s))
-ALL_OBJECTS := $(SYSTEM_BUILD_DIR)/_start.o $(ASM_OBJECTS) $(C_OBJECTS) $(SYSTEM_BUILD_DIR)/_magic.o
+ALL_OBJECTS := $(SYSTEM_BUILD_DIR)/_start.o $(ASM_OBJECTS) $(C_OBJECTS)
 
 # Targets
 all: $(OUTPUT_BIN) $(OUTPUT_ASM) $(OUTPUT_ASM_HEX) hex
