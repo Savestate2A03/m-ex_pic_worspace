@@ -22,31 +22,26 @@ OUT="$2"
     cat <<'EOF'
 SECTIONS
 {
-    . = 0x80000000;
+    . = 0x40000000;
 
     .text : {
         *(.text)
         *(.text.*)
         . = ALIGN(4);
-        *(.got2)
-        . = ALIGN(4);
+        __rei_wolf_rodata_start = .;
         *(.rodata)
         *(.rodata.*)
         . = ALIGN(4);
-        __data_start = .;
+        __rei_wolf_got2_start = .;
+        *(.got2)
+        . = ALIGN(4);
+        __rei_wolf_got2_end = .;
+        __rei_wolf_data_start = .;
         *(.data)
+        . = ALIGN(4);
         *(.data.*)
         . = ALIGN(4);
-        __data_end = .;
-        /* BSS goes at the end */
-        __bss_start = .;
-        *(.sbss)
-        *(.sbss.*)
-        *(.bss)
-        *(.bss.*)
-        *(COMMON)
-        . = ALIGN(4);
-        __bss_end = .;
+        __rei_wolf_data_end = .;
     }
 
     /DISCARD/ : {

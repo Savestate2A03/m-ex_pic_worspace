@@ -9,6 +9,7 @@
 -DGEKKO
 -mogc
 -mcpu=750
+-m32
 -meabi
 -mhard-float
 -O2

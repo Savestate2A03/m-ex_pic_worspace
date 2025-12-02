@@ -36,23 +36,27 @@ def main():
     hex_rgx_matches = re.findall(hex_rgx, inject_hex)
     hex_rgx_matches_orig = hex_rgx_matches
 
-    data_sequence_start = find_sequence(hex_rgx_matches, ['a1c23cc4', '21abfaad', 'deadbeef', 'fafafafb'])
-    hex_rgx_matches = hex_rgx_matches[data_sequence_start:]
+    hex_rgx_matches_orig.append('00000000')
 
-    fn_names_rgx = r"8[0-9a-fA-F]{7}\s+<(\S+)>:"
+    fn_names_rgx = r"4[0-9a-fA-F]{7}\s+<(\S+)>:"
     fn_names_rgx_replacement = r"\1:"
     inject = re.sub(fn_names_rgx, fn_names_rgx_replacement, inject)
 
-    mid_fn_jumps_rgx = r"(8[0-9a-fA-F]{7})\s+<(\S+)\+(\S+)>"
+    mid_fn_jumps_rgx = r"(4[0-9a-fA-F]{7})\s+<(\S+)\+(\S+)>"
     mid_fn_jumps_rgx_replacement = r"\2_\3"
     mid_fn_jumps_matches = re.findall(mid_fn_jumps_rgx, inject)
 
     inject = re.sub(mid_fn_jumps_rgx, mid_fn_jumps_rgx_replacement, inject)
 
-    for match in mid_fn_jumps_matches:
-        inject = inject.replace(f'{match[0]}:', f'{match[1]}_{match[2]}:\n{match[0]}:')
+    labels = []
 
-    fn_jumps_rgx = r"8[0-9a-fA-F]{7}\s+<(\S+)>"
+    for match in mid_fn_jumps_matches:
+        label = f'{match[1]}_{match[2]}'
+        if label not in labels:
+            labels.append(label)
+            inject = inject.replace(f'{match[0]}:', f'{label}:\n{match[0]}:')
+
+    fn_jumps_rgx = r"4[0-9a-fA-F]{7}\s+<(\S+)>"
     fn_jumps_rgx_replacement = r"\1"
     inject = re.sub(fn_jumps_rgx, fn_jumps_rgx_replacement, inject)
 
@@ -67,29 +71,32 @@ def main():
     pic_bcl_resolution_replacement = r"31"
     inject = re.sub(pic_bcl_resolution, pic_bcl_resolution_replacement, inject)
 
+    pic_crxor_resolution = r"crclr(\s+)(4\*cr1\+eq)"
+    pic_crxor_resolution_replacement = r"crxor\g<1>6, 6, 6"
+    inject = re.sub(pic_crxor_resolution, pic_crxor_resolution_replacement, inject)
+
     inject = inject.splitlines()
     checks_passed = -1
 
     line_chec_rgx = r"([0-9a-fA-F]{8}:\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})\s+)(.*)"
 
-    for line in range(len(inject)):
-        try:
-            if line < len(inject) - 4:
-                matches = re.findall(line_chec_rgx, inject[line])[0]
-                if ((matches[1]+matches[2]+matches[3]+matches[4]).upper() == 'A1C23CC4'):
-                    matches = re.findall(line_chec_rgx, inject[line+1])[0]
-                    if ((matches[1]+matches[2]+matches[3]+matches[4]).upper() == '21ABFAAD'):
-                        matches = re.findall(line_chec_rgx, inject[line+2])[0]
-                        if ((matches[1]+matches[2]+matches[3]+matches[4]).upper() == 'DEADBEEF'):
-                            matches = re.findall(line_chec_rgx, inject[line+3])[0]
-                            if ((matches[1]+matches[2]+matches[3]+matches[4]).upper() == 'FAFAFAFB'):
-                                inject = inject[:line]
-                                break
-        except:
-            pass
+    got2_found = False
+    line_start = -1
 
-    inject.append('')
-    inject.append('pic_data:')
+    got_rgx = r"[0-9a-fA-F]{8}:\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})\s+.+"
+    gor_rgx_replacement = r".long 0x\1\2\3\4"
+
+    for line in range(len(inject)):
+        if "__rei_wolf_rodata_start" in inject[line]:
+            line_start = line
+            break
+        if "__rei_wolf_got2_start" in inject[line]:
+            line_start = line
+            break
+
+    if line_start != -1:
+        for line in range(line_start, len(inject)):
+            inject[line] = re.sub(got_rgx, gor_rgx_replacement, inject[line])
 
     instructions_rgx = r"[0-9a-fA-F]{8}:\s+[0-9a-fA-F]{2}\s+[0-9a-fA-F]{2}\s+[0-9a-fA-F]{2}\s+[0-9a-fA-F]{2}\s+(.+)"
     long_expand_rgx = r"\.long 0x([0-9a-fA-F]+)"
@@ -105,11 +112,9 @@ def main():
             inject[line] = f'.long 0x{f"{int(long_expand_rgx_matches[0], 16):08x}"}'
         except:
             pass
-        
-    for hex_match in hex_rgx_matches:
-        inject.append(f'.long 0x{hex_match}')
 
-    inject = inject[inject.index('_start:'):]
+    inject.append('.long 0x00000000')
+
     inject = "\n".join(inject)
 
     print("\n --- ASM ---")
