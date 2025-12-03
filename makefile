@@ -19,6 +19,8 @@ SYSTEM_BUILD_DIR := $(BUILD_DIR_BASE)/system
 SRC_DIR := ./src
 LINKS_DIR := ./m-ex/MexTK/links
 
+HEADERS := $(shell find ./include -name '*.h')
+
 # Includes
 INCLUDE_DIR := -I./m-ex/MexTK/include -I./include/system -I./include/user
 
@@ -68,10 +70,12 @@ $(LINKER_SCRIPT): $(LINKS_DIR)/melee.link | $(BUILD_DIR)
 	@bash ./generate_linker_script.sh $< $@
 
 # C
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
-	@echo "Compiling: $<"
-	@mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS) $< -o $@
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS) | $(BUILD_DIR)
+    @echo "Compiling: $<"
+    @mkdir -p $(dir $@)
+    $(CC) -c $(CFLAGS) -MMD -MP $< -o $@
+
+-include $(ALL_OBJECTS:.o=.d)
 
 # Link
 $(OUTPUT_ELF): $(ALL_OBJECTS) $(LINKER_SCRIPT) | $(OUTPUT_DIR)

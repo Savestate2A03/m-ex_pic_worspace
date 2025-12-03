@@ -3,7 +3,12 @@
 
 // Arbitrary, can change as you please
 #define INJECT_ALLOC_SIZE 0x8270
+
+// Heap ID 6 is the first slot Melee doesn't wipe since it's hard-coded to only wipe 0-5
 #define INJECT_HEAP_ID 6
+
+// USB Memory Card Controller extra space (unused by vanilla game)
+#define USB_MCC_EXTRA_ADDR 0x8032C998
 
 typedef struct Cell Cell;
 typedef struct HeapDesc HeapDesc;
@@ -42,7 +47,7 @@ typedef enum INJECT_TYPE {
 typedef enum INJECT_SELECTION {
     USB_MCC_EXTRA,
     INJECT_ARENA_LO_HEAP,
-    INJECT_SELECITON_ERROR
+    INJECT_SELECTION_ERROR
 } INJECT_SELECTION;
 
 typedef struct INJECT_Region {

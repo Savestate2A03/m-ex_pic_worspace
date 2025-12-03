@@ -38,6 +38,8 @@ void CSS_Exit(void* data) {
     think_count = NULL;
 
     if (callbacks->MSB_ExistingExit) callbacks->MSB_ExistingExit(data);
+    INJECT_Free(callbacks);
+    callbacks = NULL;
 }
 
 void CSS_Bootstrap() {

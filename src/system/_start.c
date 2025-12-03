@@ -21,9 +21,21 @@ typedef unsigned short x16;
 typedef unsigned char x8;
 
 // Patching related helper inlines
-inline void _patch_x32(x32* address, x32 data) { *address = data; }
-inline void _patch_x16(x16* address, x16 data) { *address = data; }
-inline void _patch_x8(x8*   address, x8  data) { *address = data; }
+inline void _patch_x32(x32* address, x32 data) {
+    *address = data;
+    DCFlushRange(address, 4);
+    ICInvalidateRange(address, 4);
+}
+inline void _patch_x16(x16* address, x16 data) {
+    *address = data;
+    DCFlushRange(address, 4);
+    ICInvalidateRange(address, 4);
+}
+inline void _patch_x8(x8* address, x8 data) {
+    *address = data;
+    DCFlushRange(address, 4);
+    ICInvalidateRange(address, 4);
+}
 
 // References to the .got2 table
 extern x32 __rei_wolf_got2_lo[];
